@@ -22,7 +22,7 @@ import sys
 import socket
 import re
 # you may use urllib to encode data appropriately
-import urllib.parse
+from urllib.parse import urlparse
 
 def help():
     print("httpclient.py [GET/POST] [URL]\n")
@@ -41,13 +41,18 @@ class HTTPClient(object):
         return None
 
     def get_code(self, data):
-        return None
+        # [version, status code, message]; return status code
+        data_list = data.split("\r\n")
+        status_code = data_list[1]
+        return status_code
 
     def get_headers(self,data):
-        return None
+        headers = data.split("\r\n")
+        return headers
 
     def get_body(self, data):
-        return None
+        body = data.split("\r\n\r\n")[1]
+        return body
     
     def sendall(self, data):
         self.socket.sendall(data.encode('utf-8'))
@@ -68,11 +73,33 @@ class HTTPClient(object):
         return buffer.decode('utf-8')
 
     def GET(self, url, args=None):
+        # TODO: Implement basic HTTP GET []
         code = 500
         body = ""
+
+        # urllib.parse is OKAY for parsing URLs; https://docs.python.org/3/library/urllib.parse.html
+        o = urlparse(url)
+        host = o.hostname
+        port = o.port
+        if o.path == "":
+            path = "/"
+        else:
+            path = o.path
+        
+        self.connect(host, port)
+        request = "GET {} HTTP/1.1\r\nHost: {}\r\nConnection: close\r\n\r\n".format(path, host)
+        self.sendall(request)
+
+        self.sendall(request)
+        response = self.recvall(self.socket)
+        self.close()
+        code = self.get_code(response)
+        body = self.get_body(response)
+
         return HTTPResponse(code, body)
 
     def POST(self, url, args=None):
+        # TODO: Implement basic HTTP POST []
         code = 500
         body = ""
         return HTTPResponse(code, body)
